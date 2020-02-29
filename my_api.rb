@@ -19,8 +19,12 @@ def my_autocomplete(input, latitude, longitude)
 	   .map { |x| x[0...x.index(/[^a-z]/, input.length)] }
 	   .min { |a, b| a.length <=> b.length }
 	
+	prediction = input[0...input.length] + prediction[input.length...prediction.length]
+	
 	JSON.generate({ prediction: prediction }) # return a hash to differentiate {prediction:"error"} from simply "error"
 end
+
+puts my_autocomplete('VIETNAM', 38.036700, -78.486488)
 
 # returns a list of businesses based on user input
 # to be called occasionally with complete terms, viz. those from my_autocomplete()
