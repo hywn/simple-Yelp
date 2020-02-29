@@ -4,6 +4,8 @@ require 'net/http'
 
 API_KEY = ENV['YELP_KEY']
 
+abort('Fatal: no Yelp API key (YELP_KEY) found in ENV') if API_KEY.nil?
+
 API_HOST         =            'https://api.yelp.com/v3/'
 URL_SEARCH       = API_HOST + 'businesses/search'
 URL_BUSINESS     = API_HOST + 'businesses/'  # trailing / because we append the business id to the path
