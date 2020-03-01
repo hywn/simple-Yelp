@@ -19,7 +19,7 @@ def my_autocomplete(input, latitude, longitude)
 	   .map { |x| x[0...x.index(/[^a-z]/, input.length)] }
 	   .min { |a, b| a.length <=> b.length }
 	
-	prediction = input[0...input.length] + prediction[input.length...prediction.length]
+	prediction = input[0...input.length] + prediction[input.length...prediction.length] if !prediction.nil?
 	
 	JSON.generate({ prediction: prediction }) # return a hash to differentiate {prediction:"error"} from simply "error"
 end

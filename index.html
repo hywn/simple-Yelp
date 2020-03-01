@@ -1,12 +1,20 @@
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
-	integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
-	crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
-	integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
-	crossorigin=""></script>
+<!-- actual HTML content -->
+<div class="box"><span class="result"><pre><b>simple-Yelp v0.1</b></pre><pre><a href="javascript:toggleMap()">[toggle map]</a></span></pre></div>
+<div id="search" class="box">
+	<span class="typeahead">
+		<input id="searchbox"      class="searchbox" type="text" autocomplete="off" spellcheck="false" onInput="onInput()" placeholder="enable location to search!" autofocus>
+		<input id="searchbox_hint" class="searchbox" type="text" autocomplete="off" spellcheck="false" tabindex="-1" readonly>
+	</span>
+</div>
+<div id="map_box" class="box"><div id="merchant_map"></div></div>
+<div id="results" class="box"></div>
 
+<!-- style the HTML -->
 <style>
-pre { margin: 0; padding: 0 }
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans+KR|Roboto+Mono&display=swap');
+
+body, input { font-family: 'Noto Sans KR' }
+pre  { font-family: 'Roboto Mono'; margin: 0; padding: 0 }
 
 body, .box, .result { display: flex }
 body, .box          { flex-direction: column }
@@ -20,21 +28,20 @@ body { margin: 2em;   align-items: center }
 #searchbox      { position: relative; z-index: 2 }
 #searchbox_hint { position: absolute; z-index: 1; top: 0px; left: 0px }
 
-.result { justify-content: space-between; margin: 0.2em 0 0.2em 0 }
+.result { justify-content: space-between; margin: 0.2em 0 0.2em 0; word-break: break-word }
 
 #merchant_map { height: 25em }
 </style>
 
-<div class="box"><span class="result"><pre><b>simple yelp v0.1</b></pre><pre><a href="javascript:toggleMap()">[toggle map]</a></span></pre></div>
-<div id="search" class="box">
-	<span class="typeahead">
-		<input id="searchbox"      class="searchbox" type="text" autocomplete="off" spellcheck="false" onInput="onInput()" placeholder="enable location to search!" autofocus>
-		<input id="searchbox_hint" class="searchbox" type="text" autocomplete="off" spellcheck="false" tabindex="-1" readonly>
-	</span>
-</div>
-<div id="map_box" class="box"><div id="merchant_map"></div></div>
-<div id="results" class="box"></div>
+<!-- load in Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+	integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+	crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+	integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+	crossorigin=""></script>
 
+<!-- add functionality to HTML -->
 <script>
 // initialize UI elements
 let SEARCHBOX      = document.querySelector('#searchbox')
@@ -52,16 +59,21 @@ const EMPTY_RESULTS    = '<div class="result">no results... yet</div>'
 // displays empty results
 RESULTS.innerHTML = EMPTY_RESULTS
 
-// *** setting up map and location *** //
+
+// ***************************************** //
+// *** code relating to map and location *** //
+// ***************************************** //
+
 let latitude  = 16.774548
 let longitude = -3.004390
-
-function set_location(lat, lon) {
+function set_location(lat, lon)
+{
 	[latitude, longitude] = [lat, lon]
 	MAP.setView([lat, lon], 13)
 	L.marker([lat, lon]).addTo(MAP).bindPopup('you are here')
 }
 
+// sets up map display
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 	attribution: '<a href="https://www.openstreetmap.org/">OpenStreetMap</a> and <a href="https://www.mapbox.com/">Mapbox</a>',
 	maxZoom: 18,
@@ -71,6 +83,7 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 	accessToken: 'pk.eyJ1Ijoiamg3cWJlIiwiYSI6ImNrNzc0czA1cjA0MnAzbHFoYWIwejhhNWMifQ.uUWrL3aybxQMEItnXz-HZA'
 }).addTo(MAP);
 
+// gets user coordinates
 if (navigator.geolocation)
 	navigator.geolocation.getCurrentPosition(position => {
 		set_location(position.coords.latitude, position.coords.longitude)
@@ -78,66 +91,79 @@ if (navigator.geolocation)
 		clear_hint() // clearing will get local yelp recommendations
 	})
 
-// *** API-calling-related code *** //
+
+// ****************************************************** //
+// *** code relating to communication with server/API *** //
+// ****************************************************** //
+
+// calls API at some url; runs given callback with the fetched JSON
+// only runs callback if force=true, or there do not exist more-recent API calls
 let order = 0
-function fetch_json_then(url, callback, force=false) {
+function fetch_json_then(url, callback, force=false)
+{
 	let my_order = ++order
 	fetch(url)
 		.then(response => response.json())
 		.then(json => {
-			if (order == my_order || force) { // ignore old requests that have come in late
+			if (order == my_order || force) // ignore requests that have come in late
 				callback(json)
-				console.log('got ' + url)
-				console.log(json)
-			}
 		})
 }
 
-function as_business_display(json) {
+// turns JSON that represents a business into an HTML search-result element
+function as_business_display(json)
+{	
+	// get data from json and turn all into strings, null or not
+	let [rating, price, distance] = [json['rating'], json['price'], json['distance']]
+	rating   =   rating ? `(${rating.toFixed(1)})`          : '     '
+	price    =    price ? price.padEnd(4, ' ')              : '    '
+	distance = distance ? (distance/1000).toFixed(1) + 'km' : ''
+	
+	// create HTML element
 	let result = document.createElement('div')
-	
-	// problem: some things do not have price, will return price: null.
-	let rating = json['rating']
-	let price = json['price']
-	let distance = json['distance']
-	
-	rating = rating? `(${rating.toFixed(1)})` : '     '
-	price = price? price.padEnd(4, ' ') : '    '
-	distance = distance? (distance/1000).toFixed(1) + 'km' : ''
-	
 	result.innerHTML = `<a href="${json['url']}">${json['name']}</a><pre>${distance} ${rating} ${price}</pre>`
-		
 	result.className = 'result'
 	
 	return result
 }
 
-let last_hint = '-1'
+
+// *************** //
+// *** UI code *** //
+// *************** //
+
+// updates searchbox hint
+// if updated with a new/changed hint, run search with that hint, display results, and update map
+let last_hint = '-1aaaaaaaaaaaaa'
 let markers = []
-function set_hint(text) {
+function set_hint(text)
+{
 	SEARCHBOX_HINT.placeholder = text
-	
 	if(text === last_hint)
 		return
 	last_hint = text
 	
-	// get new results if prediction has changed
+	// call search API if hint is new/changed
 	fetch_json_then(`${SEARCH_URL}?input=${text}&latitude=${latitude}&longitude=${longitude}`, business_jsons => {
 		
-		// make sure to always get search results, because is really weird if they don't come in
+		// retry if failed (Yelp refused to cooperate)
 		if(business_jsons == 'error') {
 			set_hint(text)
 			return
 		}
 		
+		// display message if no results found
 		if(business_jsons.length == 0) {
 			RESULTS.innerHTML = EMPTY_RESULTS
 			return
 		}
 		
-		// display in search results and generate a map marker for each business
+		// display search results and update map
+		
 		RESULTS.innerHTML = ''
+		
 		markers.forEach(marker => marker.remove())
+		
 		markers = business_jsons.map(business => {
 			RESULTS.appendChild(as_business_display(business))
 			
@@ -145,41 +171,43 @@ function set_hint(text) {
 				.addTo(MAP).bindPopup(business['name'], { autoClose: false, closeOnClick: false })
 		})
 		
-		markers.slice(0, 3).forEach(marker => marker.getPopup().setLatLng(marker.getLatLng()).openOn(MAP))
+		markers.slice(0, 3).forEach(marker => marker.getPopup() // opens top 3 results on map
+			.setLatLng(marker.getLatLng()).openOn(MAP))
 		
-		MAP.fitBounds(L.featureGroup(markers).getBounds().pad(0.05))
+		MAP.fitBounds(L.featureGroup(markers).getBounds().pad(0.05)) // fit map view to new results
 		
 	}, force=true)
 }
 
 function clear_hint() { set_hint('') }
 
-// called when searchbox input changes
-function onInput() {
+// processes user input
+// sends user input to API and sets hint to fetched value, retrying if API returned an error
+function onInput()
+{
 	let user_input = SEARCHBOX.value
-	
 	if(!user_input) {
 		clear_hint()
 		return
 	}
 	
-	// updates prediction, adds any extra business suggestions yelp has
+	// calls autocomplete API
 	fetch_json_then(`${AUTOCOMPLETE_URL}?input=${user_input}&latitude=${latitude}&longitude=${longitude}`, json => {
 		
-		// could actually ignore error here without too much of a weirdness
-		// but choose to retry for better experience
+		// retry if failed (Yelp refused to cooperate)
 		if(json == 'error') {
 			onInput()
 			return
 		}
 		
-		/*** updates hint/prediction ***/
+		// updates searchbox hint with value fetched from API
 		prediction = json['prediction']
 		set_hint(prediction? prediction : '')
 		
 	})
 }
 
+// toggles map visibility
 function toggleMap() {
 	if (MAPBOX.style.display === 'none')
 		MAPBOX.style.display = 'block'
