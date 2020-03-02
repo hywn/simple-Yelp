@@ -21,7 +21,7 @@ body, .box          { flex-direction: column }
             .result { flex-direction: row }
 
 body { margin: 2em;   align-items: center }
-.box { margin: 0.2em; padding: 1em; width: 32em; background-color: #eee }
+.box { margin: 0.2em; padding: 1em; width: 35em; background-color: #eee }
 
 .typeahead      { position: relative; display: inline-block; background-color: #fff }
 .searchbox      { width: 100%; background: none; border: none; font-size: 2em; padding: 0.1em }
@@ -30,7 +30,7 @@ body { margin: 2em;   align-items: center }
 
 .result { justify-content: space-between; margin: 0.2em 0 0.2em 0; word-break: break-word }
 
-#merchant_map { height: 25em }
+#merchant_map { height: 30em }
 </style>
 
 <!-- load in Leaflet -->
@@ -171,7 +171,7 @@ function set_hint(text)
 				.addTo(MAP).bindPopup(business['name'], { autoClose: false, closeOnClick: false })
 		})
 		
-		markers.slice(0, 3).forEach(marker => marker.getPopup() // opens top 3 results on map
+		markers.slice(0, 3).reverse().forEach(marker => marker.getPopup() // opens top 3 results on map
 			.setLatLng(marker.getLatLng()).openOn(MAP))
 		
 		MAP.fitBounds(L.featureGroup(markers).getBounds().pad(0.05)) // fit map view to new results
