@@ -1,6 +1,8 @@
 # simple-Yelp
 Simple interface for searching Yelp ([for restaurants](https://github.com/hywn/simple-Yelp/blob/gh-pages/yelp_api.rb#L46)) written using HTML/CSS/JS and Ruby
 
+![example](https://github.com/hywn/simple-Yelp/blob/gh-pages/example.png)
+
 ## stuff used
 - [Yelp Fusion](https://github.com/Yelp/yelp-fusion): Yelp API
 - [Sinatra](http://sinatrarb.com/)/[sinatra-cross_origin](https://github.com/britg/sinatra-cross_origin): Ruby web framework
